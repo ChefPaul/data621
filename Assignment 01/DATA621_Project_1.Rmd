@@ -3,6 +3,10 @@ title: "Money Ball - Data 621 Project 1"
 author: "Jack Russo, Javern Wilson, Joseph Simone, Anthony Munoz, Paul Perez"
 date: "03-01-2020"
 output:
+  pdf_document:
+    df_print: tibble
+    toc: true
+    toc_depth: 2
   html_document:
     df_print: paged
     toc: true
@@ -11,10 +15,6 @@ output:
       smooth_scroll: true
     theme: yeti
     highlight: pygments
-  pdf_document:
-    df_print: tibble
-    toc: true
-    toc_depth: 2
 ---
 
 **Overview**
@@ -698,6 +698,6 @@ head(eval_data, 30)
 
 ## Appendix
 
-Rcode: [Github]()
+Rcode: [Github](https://github.com/ChefPaul/data621/blob/master/Assignment%2001/DATA621_Project_1.Rmd)
 
-Predicted Wins: [Github]()
+Predicted Wins: [Github](https://github.com/ChefPaul/data621/blob/master/Assignment%2001/moneyball_preds.csv)
