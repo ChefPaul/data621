@@ -544,4 +544,4 @@ write.csv(ntest.scaled,"Pred_Eval.csv", row.names=FALSE)
 
 #### Appendix -->
 
-Find Source Code on [GITHUB](https://github.com/ChefPaul/data621/tree/master/Assignment%2003)
+Find Source Code on [GITHUB](https://github.com/ChefPaul/data621/blob/master/Assignment%2003/DATA621_Project3.Rmd)
