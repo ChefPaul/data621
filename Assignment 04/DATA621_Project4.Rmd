@@ -20,167 +20,86 @@ output:
 
 In this homework assignment, we will explore, analyze and model a data set containing approximately 8000 records representing a customer at an auto insurance company. Each record has two response variables. The first response variable, `TARGET_FLAG`, is a `1` or a `0`. A “**1**” means that the person was in a car crash. A "**0**" means that the person was not in a car crash. The second response variable is `TARGET_AMT`. This value is zero if the person did not crash their car. But if they did crash their car, this number will be a value greater than zero. 
 
- 
 
 Our objective is to build multiple linear regression and binary logistic regression models on the training data to predict the probability that a person will crash their car and also the amount of money it will cost if the person does crash their car. Only variables given in the project will be used unless new variables are derived from the original variables. Below is a short description of the variables of interest in the data set: 
 
-
 + `INDEX`    Identification Variable (do not use) 
-
   - **EFFECT**: None 
-
-
 
 + `TARGET_FLAG` Was Car in a crash? 1=YES 0=NO  
-
   - **EFFECT**: None 
-
-
 
 + `TARGET_AMT` If car was in a crash, what was the cost 
-
   - **EFFECT**: None 
 
-
-
 + `AGE` Age of Driver 
-
   - **EFFECT**: Very young people tend to be risky. Maybe very old people also. 
 
-
-
 + `BLUEBOOK` Value of Vehicle 
-
   - **EFFECT**: Unknown effect on probability of collision, but probably effect the payout if there is a crash 
 
-
-
 + `CAR_AGE` Vehicle Age 
-
   - **EFFECT**: Unknown effect on probability of collision, but probably effect the payout if there is a crash
-
-
 
 + `CAR_TYPE` Type of Car 
-
   - **EFFECT**: Unknown effect on probability of collision, but probably effect the payout if there is a crash
 
-
-
 + `CAR_USE` Vehicle Use 
-
   - **EFFECT**: Commercial vehicles are driven more, so might increase probability of collision 
 
-
-
 + `CLM_FREQ` # Claims (Past 5 Years) 
-
   - **EFFECT**: The more claims you filed in the past, the more you are likely to file in the future 
 
-  
-
 + `EDUCATION` Max Education Level 
-
   - **EFFECT**: Unknown effect, but in theory more educated people tend to drive more safely
 
-
-
 + `HOMEKIDS` # Children at Home 
-
   - **EFFECT**: Unknown effect 
-
-
 
 + `HOME_VAL` Home Value 
-
   - **EFFECT**: In theory, home owners tend to drive more responsibly 
 
-  
-
 + `INCOME` Income 
-
   - **EFFECT**: In theory, rich people tend to get into fewer crashes 
 
-  
-
 + `JOB` Job Category 
-
   - **EFFECT**: In theory, white collar jobs tend to be safer
 
-  
-
 + `KIDSDRIV` # Driving Children 
-
   - **EFFECT**: When teenagers drive your car, you are more likely to get into crashes 
 
-  
-
 + `MSTATUS` Marital Status 
-
   - **EFFECT**: In theory, married people drive more safely 
 
-  
-
 + `MVR_PTS` Motor Vehicle Record Points 
-
   - **EFFECT**: If you get lots of traffic tickets, you tend to get into more crashes 
 
-  
-
 + `OLDCLAIM` Total Claims (Past 5 Years) 
-
   - **EFFECT**: If your total payout over the past five years was high, this suggests future payouts will be high 
 
-  
-
 + `PARENT1` Single Parent 
-
   - **EFFECT**: Unknown effect 
-
   
-
 + `RED_CAR` A Red Car 
-
   - **EFFECT**: Urban legend says that red cars (especially red sports cars) are more risky. Is that true? 
 
-  
-
 + `REVOKED` License Revoked (Past 7 Years) 
-
-  - **EFFECT**: If your license was revoked in the past 7 years, you probably are a more risky driver. 
-
-  
+  - **EFFECT**: If your license was revoked in the past 7 years, you probably are a more risky driver.
 
 + `SEX` Gender 
-
   - **EFFECT**: Urban legend says that women have less crashes then men. Is that true? 
 
-  
-
 + `TIF` Time in Force 
-
   - **EFFECT**: People who have been customers for a long time are usually more safe.
 
-  
-
 + `TRAVTIME` Distance to Work 
-
   - Long drives to work usually suggest greater risk 
 
-  
-
 + `URBANICITY` Home/Work Area 
-
   - **EFFECT**: Unknown 
 
-  
-
 + `YOJ` Years on Job 
-
   - **EFFECT**: People who stay at a job for a long time are usually more safe 
-
-
-
 
 
 ```{r include = FALSE}
@@ -188,9 +107,6 @@ Our objective is to build multiple linear regression and binary logistic regress
 # knitr::opts_chunk$set(echo=FALSE)
 
 ```
-
-
-
 
 
 ```{r message=FALSE, warning=FALSE}
@@ -229,10 +145,6 @@ library(mice)
 
 
 
-
-
-
-
 ```{r}
 
 insurance_train <- read.csv("https://raw.githubusercontent.com/javernw/DATA621-Business-Analytics-and-Data-Mining/master/insurance_training_data.csv")
@@ -247,8 +159,6 @@ inputs <- columns[!columns %in% c(target,"INDEX")]
 
 ```
 
-
-
 ### Preview
 
 ```{r}
@@ -258,10 +168,7 @@ insurance_train %>%  tibble(head(10))
 ```
 
 
-
 ## DATA EXPLORATION
-
-
 
 Structure
 
@@ -276,14 +183,9 @@ summary(insurance_train)
 ```
 
 
-
 We have some missing values in the training set. Especially variables such as `CAR_AGE`. We will illustrate a graphical view was we move forward.
 
-
-
 ### Targets
-
-
 
 #### How many were in a car crash?
 
@@ -297,14 +199,9 @@ ggplot(tf, aes(x = Var1, y = Freq, fill = Var1)) + geom_bar(stat = "identity") +
 
 ```
 
-
-
 We can obviously see that majority of the observations (`73.6`%) in the trainig set were not involved in an accident.
 
-
-
 #### What was the cost?
-
 
 
 ```{r}
@@ -1304,21 +1201,12 @@ cl_cer <- function(df){
 
 
 
-
-
-
 #### PRECISION
-
-
 
 This is the positive value or the fraction of the positive predictions that are actually positive.
 
 
-
 $$\large \text{Precision} = \large \frac{TP}{TP+FP}$$
-
-
-
 
 
 ```{r}
@@ -1348,20 +1236,11 @@ cl_precision <- function(df){
 ```
 
 
-
-
-
 #### SENSITIVITY
-
-
 
 The sensitivity is sometimes considered the true positive rate since it measures the accuracy in the event population.
 
-
-
 $$\large \text{Sensitivity} = \large \frac{TP}{TP+FN}$$
-
-
 
 ```{r}
 
@@ -1387,21 +1266,11 @@ cl_sensitivity <- function(df){
 
 ```
 
-
-
-
-
 #### SPECIFICITY
-
-
 
 This is the true negatitive rate or the proportion of negatives that are correctly identified.
 
-
-
 $$\large \text{Specificity} = \large \frac{TN}{TN+FP}$$
-
-
 
 ```{r}
 
@@ -1427,21 +1296,13 @@ cl_specificity<- function(df){
 
 ```
 
-
-
-
-
 #### F1 SCORE OF PREDICTIONS
-
-
 
 The F1 Score of Predictions measures the test’s accuracy, on a scale of 0 to 1 where a value of 1 is the most accurate and the value of 0 is the least accurate.
 
 
 
 $$\large \text{F1 Score} = \large \frac{2 * Precision*Sensitivity}{Precision + Sensitivity}$$
-
-
 
 ```{r}
 
@@ -1469,13 +1330,7 @@ cl_f1score <- function(df){
 
 ```
 
-
-
-
-
 ##### F1 SCORE BOUNDS
-
-
 
 ```{r}
 
@@ -1507,11 +1362,7 @@ summary(f)
 
 ```
 
-
-
 #### Results from Selected Classification model
-
-
 
 ```{r}
 
@@ -1526,16 +1377,9 @@ kable(df_1)
 ```
 
 
-
-
-
 #### ROC CURVE
 
-
-
 Shows how the true positive rate against the false positive rate at various threshold settings.  The AUC (Area Under Curve) tells how much model is capable of distinguishing between classes. Higher the AUC is better, that is, how well the model is at predicting 0s as 0s and 1s as 1s.
-
-
 
 Creating an ROC Function
 
@@ -1577,8 +1421,6 @@ ROC <- function(x, y){
 
 ```
 
-
-
 ```{r}
 
 ROC1 <- ROC(flg_data$TARGET_FLAG, flg_data$pred.class)
@@ -1586,8 +1428,6 @@ ROC1 <- ROC(flg_data$TARGET_FLAG, flg_data$pred.class)
 ROC1
 
 ```
-
-
 
 ```{r}
 
@@ -1598,20 +1438,12 @@ roc.mod1 <- roc(flg_data$TARGET_FLAG, flg_data$pred.class)
 plot(roc.mod1, print.auc = TRUE , main = "pROC Model 1")
 
 ```
-
-
-
 Based on the AUC the classification model performed at a satisfactory level with a score of `0.662`.
-
-
 
 ### Predictions
 
 
-
 #### Linear Model
-
-
 
 ```{r}
 
@@ -1652,9 +1484,6 @@ eval_amt <- insurance_eval[,-c(1,2)]
 ```
 
 
-
-
-
 ```{r}
 
 eval_amt <- predict(lm_mod2, newdata = eval_amt, interval="prediction")
@@ -1665,15 +1494,7 @@ insurance_eval$TARGET_AMT <- eval_amt[,1]
 
 ```
 
-
-
-
-
-
-
 #### Logisitic Model
-
-
 
 ```{r}
 
@@ -1683,15 +1504,9 @@ transform_insurance_eval$TARGET_FLAG <- ifelse(prob >= 0.50, 1, 0)
 
 ```
 
-
-
-
-
 #### Final Test Data Result 
 
-
-
-[Full Test Set Here](https://github.com/javernw/DATA621-Business-Analytics-and-Data-Mining/blob/master/insurance_predictions.csv)
+[Full Test Set Here](https://github.com/ChefPaul/data621/blob/master/Assignment%2004/insurance_predictions.csv)
 
 ```{r}
 
@@ -1703,10 +1518,4 @@ write.csv(insurance_eval, "insurance_predictions.csv", row.names = F)
 
 ```
 
-
-
-
-
-
-
-Source code found on [GITHUB](https://github.com/javernw/DATA621-Business-Analytics-and-Data-Mining/blob/master/CTG5_DATA621_Project%204.Rmd)
+Source code found on [GITHUB](https://github.com/ChefPaul/data621/blob/master/Assignment%2004/DATA621_Project4.Rmd)
