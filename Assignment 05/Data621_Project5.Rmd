@@ -65,8 +65,8 @@ library(cycleRtools)
 library(pscl)
 ```
 ```{r}
-wine_train <- read.csv("https://raw.githubusercontent.com/javernw/DATA621-Business-Analytics-and-Data-Mining/master/wine-training-data.csv")
-wine_eval <- read.csv("https://raw.githubusercontent.com/javernw/DATA621-Business-Analytics-and-Data-Mining/master/wine-evaluation-data.csv")
+wine_train <- read.csv("https://raw.githubusercontent.com/ChefPaul/data621/master/Assignment%2005/wine-training-data.csv")
+wine_eval <- read.csv("https://raw.githubusercontent.com/ChefPaul/data621/master/Assignment%2005/wine-evaluation-data.csv")
 ```
 ## DATA EXPLORATION
 ### Preview
@@ -341,9 +341,9 @@ write.csv(wine_eval, "wine_predictions.csv", row.names = FALSE)
 ```
 
 
-[Full Test Set Here](https://github.com/ChefPaul/data621/blob/master/Assignment%2004/insurance_predictions.csv)
+[Full Test Set Here](https://raw.githubusercontent.com/ChefPaul/data621/master/Assignment%2005/wine_predictions.csv)
 
-Source code found on [GITHUB](https://github.com/ChefPaul/data621/blob/master/Assignment%2004/DATA621_Project4.Rmd)
+Source code found on [GITHUB](https://github.com/ChefPaul/data621/blob/master/Assignment%2005/Data621_Project5.Rmd)
 
 
 
