@@ -1,0 +1,481 @@
+---
+title: "Telecommunication Churn Prediction"
+author: "Paul Perez"
+date: "5/17/2020"
+output:
+  html_document:
+    df_print: paged
+    highlight: pygments
+    theme: yeti
+    toc: yes
+    toc_float:
+      collapsed: yes
+      smooth_scroll: yes
+  pdf_document:
+    toc: yes
+---
+
+## Abstract
+
+Churn prediction has become a major focus for many companies across numerous industries. Telecommunication and Banking companies often see customers churn for competitors due to consistent product changes and updates. This paper serve's the purpose of identifying various approaches and methodologies in solving the issue that many companies have with their customer's churning.  After reviewing several scholarly articles along with additional content in term's of understanding customer habits, it is common to understand
+
+**Keywords**: Churn Prediction, Logistic Regression, Binary Data, ROC and AUC techniques, Data Mining Algorithms
+
+## Introduction
+
+Though customer churn is inevitable, researcher's have made it a point to better understand their customer's and find out commonalities among those who churn. Churning can directly effect revenue for a company, especially in the telecommunications field. It is common to see a competitor offer a better product, or subscription out there resulting in customers leaving one company for another. Banks offer incentives for opening up specific account types while telecommunication companies change subscriptions terms and even offer free devices to draw interest from competitor customers. 
+
+## Literature Review
+
+As customer churn is a common problem that need's to be understood, researcher's often take machine learning and data mining approaches in order to extract the important knowledge as to why customer's churn. 
+
+Abdelrahim Kasem et al. used four different algorithms's on 9 months of SyriaTel telecom customer data to try to identify the most accurate. Decision tree, Random Forest, Gradient Boosted Machine Tree "GBM", and Extreme Gradient Boosting "XGBOOST" were the four tested, and "XBOOST" was the chosen model. By leveraging Social Network Analysis (SNA), the researcher's were able to increase the AUC of their model from 84 to 93.3% which is outstanding. (Abdelrahim Kasem et al. 2019)
+
+Yaya et al. took a random forest approach, specifically a method called improved balanced random forests (IBRF) on a real banking data set. The purpose was the investigate the standard random forests approach, but also integrate sampling techniques and cost-sensitive learning into the approach. The emphasis was altering the class distribution in customers, and putting higher penalties on misclassification of the minority class. This resulted in a significant increase in accuracy compared to other algorithms such as artificial nueral networks, decision trees, and class-weighted core support vector mashines. (Yaya et al. 2009)
+
+While there are many approaches that can be made, I will be utilizing a logistic regression approach due to limitations in my algorithmic knowledge.
+
+## Methodology
+
+Data was collected from Kaggle, and research was performed on how experts have tackled this problem in the past. The method here is the link all data sets with descriptive data on each customer, and try to draw insight as to which are common across those who churn. Statistical models will be built in an effort to explain which variables in this specific data set can help predict churn. To build the logistic regression model that will predict whether a customer will leave Telecom for another provider, some data maniputlations will need to be made. The column `Churn` will identify whether a customer has left the bank or not with the value `Yes` or `No`. The three datasets obtained will be merged on customer ID into one large one to identify all variables which may help predict the probability that outcome of a customer churning or not.
+
+## Experimentation and Results
+
+Below is a short description of the variables of interest in each data set: 
+
+### Churn Data
+
++ `customerID`    
+ - Identification Variable (do not use) 
+
++ `tenure` 
+ - Number of months the customer has been with the company
+
++ `PhoneService` 
+ - Determines if the customer has Phone Servce (Yes, No)
+
++ `Contract` 
+ - The contract type for the customer's account (Month-to-month, One year, Two year) 
+
++ `PaperlessBilling` 
+ - Determines if the customer has enrolled in Paperless Billing (Yes, No)
+
++ `PaymentMethod` 
+ - Method of Payment (Bank transfer (automatic), Credit card (automatic), Electronic check, Mailed check)
+
++ `MonthlyCharges` 
+ - Amount of Payment per Month 
+
++ `TotalCharges` 
+ - Total Amount of Payments for customer account 
+
++ `Churn` 
+ - Determines whether the customer has churned (Yes, No) 
+
+### Customer Data
+
++ `gender` 
+ - Customer gender (Female, Male) 
+
++ `SeniorCitizen` 
+ - Determines if the customer is a Senior Citizen
+
++ `Partner` 
+ - Determines if the customer has a Partner 
+
++ `Dependents` 
+ - Determines if the customer has any Dependents
+
+### Internet Data
+
++ `MultipleLines` 
+ - Determines if the customer has Multiple Lines on their contract 
+
++ `InternetService` 
+ - Determines if the customer has Internet Service on their contract  
+
++ `OnlineSecurity` 
+ - Determines if the customer has Online Security on their contract 
+
++ `OnlineBackup` 
+ - Determines if the customer has Online Backup on their contract  
+
++ `DeviceProtection` 
+ - Determines if the customer has Device Protection on their contract 
+
++ `StreamingTV`
+ - Determines if the customer has Streaming TV on their contract 
+
++ `StreamingMovies` 
+ - Determines if the customer has Streaming Movies on their contract 
+
+
+```{r include = FALSE}
+
+# knitr::opts_chunk$set(echo=FALSE)
+
+```
+
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+library(tidyverse)
+library(caret)
+library(e1071)
+library(pracma)
+library(pROC)
+library(psych)
+library(kableExtra)
+library(Hmisc)
+library(VIF)
+library(FactoMineR)
+library(corrplot)
+library(purrr)
+library(dplyr)
+library(MASS)
+library(mice)
+library(dummies)
+```
+
+The three data sets, churn_data, customer_data, and internet_data all have the common field of customerID, which will be the field to join all data sets together. The `first_merge` was the churn data set and the customer data set. The `second_merge` was then merging the internet data set onto that `first_merge`.  
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+churn_data <- read.csv("https://raw.githubusercontent.com/ChefPaul/data621/master/Final%20Project/churn_data.csv")
+customer_data <- read.csv("https://raw.githubusercontent.com/ChefPaul/data621/master/Final%20Project/customer_data.csv")
+internet_data <- read.csv("https://raw.githubusercontent.com/ChefPaul/data621/master/Final%20Project/internet_data.csv")
+```
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+first_merge <- merge(churn_data, customer_data, by.x = "customerID", by.y = "customerID")
+second_merge <- merge(first_merge, internet_data, by.x = "customerID", by.y = "customerID")
+```
+
+#### Glimpse of Data
+```{r}
+glimpse(second_merge)
+```
+
+#### Summary of Data
+```{r}
+summary(second_merge)
+```
+
+#### Check for Missing Values
+```{r echo=FALSE, fig.align="center"}
+Amelia::missmap(second_merge, col = c("dark red", "dark green"))
+```
+
+What is great about this combined dataset is that there are zero missing observations, so we won't need to impute the data. 
+
+#### Frequency Count of Categorical Variables
+
+```{r echo=FALSE, fig.width=9, fig.height=8, fig.align="center"}
+par(mfrow = c(2,2))
+barplot(table(second_merge$PhoneService), main="Phone Servce", xlab="Phone Service", ylab="Count", col="light green")
+barplot(table(second_merge$Contract), main="Contract", xlab="Contract", ylab="Count", col="light green")
+barplot(table(second_merge$PaperlessBilling), main="Paperless Billing", xlab="Paperless Billing", ylab="Count", col="light green")
+barplot(table(second_merge$PaymentMethod), main="Payment Method", xlab="Payment Method", ylab="Count", col="light green")
+barplot(table(second_merge$Churn), main="Churn", xlab="Churn", ylab="Count", col="light green")
+barplot(table(second_merge$gender), main="Gender", xlab="Gender", ylab="Count", col="light green")
+barplot(table(second_merge$SeniorCitizen), main="Senior Citizen", xlab="Senior Citizen", ylab="Count", col="light green")
+barplot(table(second_merge$Partner), main="Partner", xlab="Partner", ylab="Count", col="light green")
+barplot(table(second_merge$Dependents), main="Dependents", xlab="Dependents", ylab="Count", col="light green")
+barplot(table(second_merge$MultipleLines), main="Multiple Lines", xlab="Multiple Lines", ylab="Count", col="light green")
+barplot(table(second_merge$InternetService), main="Internet Service", xlab="Internet Service", ylab="Count", col="light green")
+barplot(table(second_merge$OnlineSecurity), main="Online Security", xlab="Online Security", ylab="Count", col="light green")
+barplot(table(second_merge$OnlineBackup), main="Online Backup", xlab="Online Backup", ylab="Count", col="light green")
+barplot(table(second_merge$DeviceProtection), main="Device Protection", xlab="Device Protection", ylab="Count", col="light green")
+barplot(table(second_merge$TechSupport), main="Tech Support", xlab="Tech Support", ylab="Count", col="light green")
+barplot(table(second_merge$StreamingTV), main="Streaming TV", xlab="Streaming TV", ylab="Count", col="light green")
+barplot(table(second_merge$StreamingMovies), main="Streaming Movies", xlab="Streaming Movies", ylab="Count", col="light green")
+```
+
+Looking at the above bar plots, we can understand a bit more about the customers in the data set. Most of the customer's are enrolled in phone services and have the month-to-month contract. They are also enrolled into paperless billing signifying that they pay electronically. A lot of the customers in this data set have not churned yet. There is an even split in gender, but when it comes to describing whethere a customer is a senior citizen or not, there are plenty more non-senior citizens. There is a fair split between customers who have partners and those who don't as well as customers who either have a single line or multiple lines. While most customers have internet, the majority of those with internet have the fiber optic packages compared to the DSL package. A lot of customers have decided not to add the online security features to their accounts. As there are similar levels of customers who have online backup and device protections, there are more customers in those two categories who have opted to not add those features. Tech support does not look to be too important to these customers, but streaming services do, in terms of TV and Movies.
+
+#### Distribution of Numerical Variables
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, fig.width=9, fig.height=8, fig.align="center"}
+hist.data.frame(second_merge[c('tenure', 'MonthlyCharges', 'TotalCharges')])
+```
+
+We can see that each histogram shows skewness. The first histogram displaying `tenure` helps align the understanding that with plenty of newer contract, or recently opened contracts, there would be lower volume of monthly and total charges. 
+
+### Data Transformations
+Using the `dummy` packages, we'll need to create dummy variables for all variables that are factors in the data set, and replace their original values.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+PhoneService.dummy <- dummy(second_merge$PhoneService, sep='_')
+Contract.dummy <- dummy(second_merge$Contract, sep='_')
+PaperlessBilling.dummy <- dummy(second_merge$PaperlessBilling, sep='_')
+Gender.dummy <- dummy(second_merge$gender, sep='_')
+Partner.dummy <- dummy(second_merge$Partner, sep='_')
+Dependents.dummy <- dummy(second_merge$Dependents, sep='_')
+MultipleLines.dummy <- dummy(second_merge$MultipleLines, sep='_')
+InternetServce.dummy <- dummy(second_merge$InternetService, sep='_')
+OnlineSecurity.dummy <- dummy(second_merge$OnlineSecurity, sep='_')
+OnlineBackup.dummy <- dummy(second_merge$OnlineBackup, sep='_')
+DeviceProtection.dummy <- dummy(second_merge$DeviceProtection, sep='_')
+TechSupport.dummy <- dummy(second_merge$TechSupport, sep='_')
+StreamingTV.dummy <- dummy(second_merge$StreamingTV, sep='_')
+StreamingMovies.dummy <- dummy(second_merge$StreamingMovies, sep='_')
+```
+
+``` {r echo=FALSE, message=FALSE, warning=FALSE}
+second_merge_slice <- second_merge[c(1:2, 7:9, 11)]
+transformed_data <- cbind(second_merge_slice, PhoneService.dummy, Contract.dummy, PaperlessBilling.dummy, Gender.dummy, Partner.dummy, Dependents.dummy, MultipleLines.dummy) 
+transformed_data <- cbind(transformed_data,InternetServce.dummy, OnlineSecurity.dummy, OnlineBackup.dummy, DeviceProtection.dummy, TechSupport.dummy, StreamingTV.dummy, StreamingMovies.dummy)
+```
+
+Now that we have transformed our dataset, we can split the dataset into a training (75%) and evaluation set (25%). The training set will be what we're going to use to build out our models, where the evaluation set is where we'll run the models on to predict churn for each customer. To do so, we'll set the seed to `123` so these models can be replicated yielding the same results should someone like to test for themselves. 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+set.seed(123)
+
+sample = sample.int(n = nrow(transformed_data), size = floor(.75*nrow(transformed_data)), replace = F)
+churn_train <- transformed_data[sample,]
+churn_eval <- transformed_data[-sample,]
+
+churn_train <- as.data.frame(churn_train)
+churn_train <- churn_train[, - c(1, 4)]
+churn_eval <- as.data.frame(churn_eval)
+churn_eval <- churn_eval[, - c(1, 4)]
+```
+
+
+### Model Build
+
+Taking a logistical regression approach, we'll evaluate all variables with the exception of `customerID` and `TotalCharges` as they aren't relevant. The `customerID` show's no value in churn, and the `TotalCharges` isn't as good an indicator for churn as `MonthlyCharges` can be. The first logistic model uses all of the variables. The second logistic model uses a step-wise approach to reduce the variables used in the model to only show relevant variables. 
+
+#### Logistic Model 1
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+log_mod1 <- glm(Churn ~., family = binomial, data = churn_train)
+#log_mod1$formula
+#log_mod1$aic
+```
+```{r echo=FALSE, message=FALSE, warning=FALSE, fig.align="center"}
+par(mfrow=c(2,2))
+plot(log_mod1)
+```
+
+#### Logistic Model 2
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+log_mod2 <- stepAIC(log_mod1, trace = F)
+#log_mod2$formula
+#log_mod2$aic
+```
+```{r echo=FALSE, message=FALSE, warning=FALSE, fig.align="center"}
+par(mfrow=c(2,2))
+plot(log_mod2)
+```
+
+
+### Model Selection
+After running an ANOVA analysis on the two logistic models, the better model is the second logistic model utilizing the step-wise approach which also had a better AIC.
+
+glm(formula = Churn ~ tenure + MonthlyCharges + SeniorCitizen + 
+    PhoneService_No + `Contract_Month-to-month` + `Contract_One year` + 
+    PaperlessBilling_No + Dependents_No + MultipleLines_No + 
+    InternetService_DSL + `InternetService_Fiber optic` + OnlineBackup_No + 
+    DeviceProtection_No + StreamingTV_No + StreamingMovies_No, 
+    family = binomial, data = churn_train)
+    
+    
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+anova(log_mod1, log_mod2)
+```
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+probabilities <- predict(log_mod2, churn_train, type = "response")
+predicted.classes <- ifelse(probabilities > 0.5, 1, 0)
+churn_train$pred.class <- predicted.classes
+table("Predictions" = churn_train$pred.class, "Actual" = churn_train$Churn)
+```
+
+
+#### Accuracy
+
+Accuracy can be defined as the fraction of predicitons our model got right. Also known as the error rate, the accuracy rate makes no distinction about the type of error being made.
+
+$$\large \text{Accuracy} = \large \frac{TP+TN}{TP+FP+TN+FN}$$
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+cl_accuracy <- function(df){
+  cm <- table("Predictions" = df$pred.class, "Actual" = df$Churn)
+  
+  TP <- cm[2,2]
+  TN <- cm[1,1]
+  FP <- cm[2,1]
+  FN <- cm[1,2]
+
+  return((TP + TN)/(TP + FP + TN + FN))
+}
+```
+
+#### Classification Error Rate
+
+The Classification Error Rate calculates the number of incorrect predictions out of the total number of predictions in the dataset.
+
+$$\large \text{Classification Error Rate} = \large \frac{FP+FN}{TP+FP+TN+FN}$$
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+cl_cer <- function(df){
+  cm <- table("Predictions" = df$pred.class, "Actual" = df$Churn)
+
+  TP <- cm[2,2]
+  TN <- cm[1,1]
+  FP <- cm[2,1]
+  FN <- cm[1,2]
+
+  return((FP + FN)/(TP + FP + TN + FN))
+}
+```
+
+
+
+
+#### Precision
+
+This is the positive value or the fraction of the positive predictions that are actually positive.
+
+
+$$\large \text{Precision} = \large \frac{TP}{TP+FP}$$
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+cl_precision <- function(df){
+  cm <- table("Predictions" = df$pred.class, "Actual" = df$Churn)
+
+  TP <- cm[2,2]
+  TN <- cm[1,1]
+  FP <- cm[2,1]
+  FN <- cm[1,2]
+
+  return(TP/(TP + FP))
+}
+```
+
+
+#### Sensitivity
+
+The sensitivity is sometimes considered the true positive rate since it measures the accuracy in the event population.
+
+$$\large \text{Sensitivity} = \large \frac{TP}{TP+FN}$$
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+cl_sensitivity <- function(df){
+  cm <- table("Predictions" = df$pred.class, "Actual" = df$Churn)
+  TP <- cm[2,2]
+  TN <- cm[1,1]
+  FP <- cm[2,1]
+  FN <- cm[1,2]
+  
+  return((TP)/(TP + FN))
+}
+```
+
+#### Specificity
+
+This is the true negatitive rate or the proportion of negatives that are correctly identified.
+
+$$\large \text{Specificity} = \large \frac{TN}{TN+FP}$$
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+cl_specificity<- function(df){
+  cm <- table("Predictions" = df$pred.class, "Actual" = df$Churn)
+
+  TP <- cm[2,2]
+  TN <- cm[1,1]
+  FP <- cm[2,1]
+  FN <- cm[1,2]
+
+  return((TN)/(TN + FP))
+}
+```
+
+#### F1 Score of Predictions
+
+The F1 Score of Predictions measures the test’s accuracy, on a scale of 0 to 1 where a value of 1 is the most accurate and the value of 0 is the least accurate.
+
+
+
+$$\large \text{F1 Score} = \large \frac{2 * Precision*Sensitivity}{Precision + Sensitivity}$$
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+cl_f1score <- function(df){
+  cm <- table("Predictions" = df$pred.class, "Actual" = df$Churn)
+
+  TP <- cm[2,2]
+  TN <- cm[1,1]
+  FP <- cm[2,1]
+  FN <- cm[1,2]
+
+  f1score <- (2 * cl_precision(df) * cl_sensitivity(df)) / (cl_precision(df) + cl_sensitivity(df))
+  return(f1score)
+}
+
+```
+
+##### F1 Score Bounds
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+f1_score_function <- function(cl_precision, cl_sensitivity){
+  f1_score <- (2*cl_precision*cl_sensitivity)/(cl_precision+cl_sensitivity)
+  return (f1_score)
+}
+
+(f1_score_function(0, .5))
+(f1_score_function(1, 1))
+p <- runif(100, min = 0, max = 1)
+s <- runif(100, min = 0, max = 1)
+f <- (2*p*s)/(p+s)
+summary(f)
+```
+
+#### Results from Selected Classification model
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, fig.align="center"}
+Metric <- c('Accuracy','Classification Error Rate', 'Precision', 'Sensitivity','Specificity', 'F1 Score')
+Score <- round(c(cl_accuracy(churn_train), cl_cer(churn_train), cl_precision (churn_train), cl_sensitivity(churn_train), cl_specificity(churn_train), cl_f1score(churn_train)),4)
+df_1 <- as.data.frame(cbind(Metric, Score))
+kable(df_1)
+```
+
+
+#### ROC CURVE
+
+Shows how the true positive rate against the false positive rate at various threshold settings.  The AUC (Area Under Curve) tells how much model is capable of distinguishing between classes. Higher the AUC is better, that is, how well the model is at predicting 0s as 0s and 1s as 1s.
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+roc.mod1 <- roc(churn_train$Churn, churn_train$pred.class)
+plot(roc.mod1, print.auc = TRUE , main = "pROC Model 1")
+```
+Based on the AUC the classification model performed at a satisfactory level with a score of `0.713`.
+
+#### Findings
+While the AUC was only `0.713`, the basis of the model proved to show a simple logistic regression model can show value in solving the churn prediction. This is a great start and the findings can help inform future model builds. The significant variables from logistic model 2 were those customer's who did not have any dependents, which is understandable as it is easier to change provider's when it is one person, compared to a family plan. These customer's also did not opt-in to have additional bundle products such as Online Backup, Device Protection, or Streaming services. The customer profile seems to be that of a person who is the only dependency on the account and is one who doesn't ask for additional perks. Additionally, the one year contract customer's seem to be those who take the contract for the year and leave. These are interesting findings that can help a company's marketing team determine a new strategy in which they either look to target potential customer's who do not fit this profile. They can also look to target customer's with this profile and offer some perks that may extend the length of the customers contract.
+
+
+### References
+Ahmad, A. K., Jafar, A., & Aljoumaa, K. (2019). Customer churn prediction in telecom using machine learning in big data platform. Journal of Big Data, 6(1), 0. 
+https://doi.org/10.1186/s40537-019-0191-6
+
+Xie, Y., Li, X., Ngai, E. W. T., & Ying, W. (2009). Customer churn prediction using improved balanced random forests. Expert Systems with Applications, 36(3), 5445–5449. 
+https://doi.org/10.1016/j.eswa.2008.06.121
+
+[Kaggle Data Set] (https://www.kaggle.com/dileep070/logisticregression-telecomcustomer-churmprediction)
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+prob <- predict(log_mod2, churn_eval[, -c(3)], type='response')
+churn_eval$Churn <- ifelse(prob >= 0.50, 1, 0)
+write.csv(churn_eval, "telecom_churn_predictions.csv", row.names = F)
+```
+
+
+#### Final Test Data Result 
+
+[Full Test Set Here](https://raw.githubusercontent.com/ChefPaul/data621/master/Final%20Project/telecom_churn_predictions.csv)
